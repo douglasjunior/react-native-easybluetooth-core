@@ -61,7 +61,7 @@ public class CoreModule extends ReactContextBaseJavaModule implements BluetoothS
 
     @Override
     public String getName() {
-        return "ReactNativeEasyBluetooth";
+        return "EasyBluetooth";
     }
 
     /* ====================================
