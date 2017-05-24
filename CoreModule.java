@@ -102,7 +102,7 @@ public class CoreModule extends ReactContextBaseJavaModule implements BluetoothS
     }
 
     public void startScan(final Promise promise) {
-        Log.d(TAG, "startScan: " + promise);
+        Log.d(TAG, "startScan");
         if (!validateServiceConfig(promise)) return;
 
         mStartScanPromise = promise;
@@ -110,7 +110,7 @@ public class CoreModule extends ReactContextBaseJavaModule implements BluetoothS
     }
 
     public void stopScan(Promise promise) throws InterruptedException {
-        Log.d(TAG, "stopScan: " + promise);
+        Log.d(TAG, "stopScan");
         if (!validateServiceConfig(promise)) return;
 
         mService.stopScan();
@@ -150,8 +150,9 @@ public class CoreModule extends ReactContextBaseJavaModule implements BluetoothS
     }
 
     public void getStatus(final Promise promise) {
-        Log.d(TAG, "getStatus: " + promise);
         if (!validateServiceConfig(promise)) return;
+
+        Log.d(TAG, "getStatus: " + mService.getStatus().name());
 
         promise.resolve(mService.getStatus().name());
     }
@@ -187,7 +188,7 @@ public class CoreModule extends ReactContextBaseJavaModule implements BluetoothS
     }
 
     public void stopService(final Promise promise) {
-        Log.d(TAG, "stopService: " + promise);
+        Log.d(TAG, "stopService");
         if (!validateServiceConfig(promise)) return;
 
         mService.stopService();
@@ -201,14 +202,15 @@ public class CoreModule extends ReactContextBaseJavaModule implements BluetoothS
      ==================================== */
 
     public void isAdapterEnable(final Promise promise) {
-        Log.d(TAG, "isAdapterEnable: " + promise);
         if (!validateBluetoothAdapter(promise)) return;
+
+        Log.d(TAG, "isAdapterEnable: " + mBluetoothAdapter.isEnabled());
 
         promise.resolve(mBluetoothAdapter.isEnabled());
     }
 
     public void enable(final Promise promise) {
-        Log.d(TAG, "enable: " + promise);
+        Log.d(TAG, "enable");
         if (!validateBluetoothAdapter(promise)) return;
 
         if (mBluetoothAdapter.enable()) {
@@ -219,7 +221,6 @@ public class CoreModule extends ReactContextBaseJavaModule implements BluetoothS
     }
 
     public void getBoundedDevices(final Promise promise) {
-        Log.d(TAG, "getBoundedDevices: " + promise);
         if (!validateBluetoothAdapter(promise)) return;
 
         WritableNativeArray devices = new WritableNativeArray();
@@ -228,6 +229,8 @@ public class CoreModule extends ReactContextBaseJavaModule implements BluetoothS
             WritableNativeMap device = wrapDevice(btDevice, 0);
             devices.pushMap(device);
         }
+
+        Log.d(TAG, "getBoundedDevices: " + devices);
 
         promise.resolve(devices);
     }
