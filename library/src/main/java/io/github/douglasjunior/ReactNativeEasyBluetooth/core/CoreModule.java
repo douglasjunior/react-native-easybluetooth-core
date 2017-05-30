@@ -250,6 +250,17 @@ public abstract class CoreModule extends ReactContextBaseJavaModule implements B
         }
     }
 
+    public void disable(final Promise promise) {
+        Log.d(TAG, "disable");
+        if (!validateBluetoothAdapter(promise)) return;
+
+        if (mBluetoothAdapter.disable()) {
+            promise.resolve(null);
+        } else {
+            promise.reject(new IllegalAccessException("Could not disable bluetooth adapter."));
+        }
+    }
+
     public void getBoundedDevices(final Promise promise) {
         if (!validateBluetoothAdapter(promise)) return;
 
