@@ -36,7 +36,6 @@ import android.util.Log;
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
-import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableArray;
@@ -52,11 +51,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-public class CoreModule extends ReactContextBaseJavaModule implements BluetoothService.OnBluetoothEventCallback, BluetoothService.OnBluetoothScanCallback {
+public abstract class CoreModule extends ReactContextBaseJavaModule implements BluetoothService.OnBluetoothEventCallback, BluetoothService.OnBluetoothScanCallback {
 
     private static final String TAG = "CoreModule";
 
-    private final String name;
     private final BluetoothManager mBluetoothManager;
     private final BluetoothAdapter mBluetoothAdapter;
     private final Class<? extends BluetoothService> mBluetoothServiceClass;
@@ -64,9 +62,8 @@ public class CoreModule extends ReactContextBaseJavaModule implements BluetoothS
     private BluetoothService mService;
     private BluetoothWriter mWriter;
 
-    public CoreModule(ReactApplicationContext reactContext, String name, Class<? extends BluetoothService> bluetoothServiceClass) {
+    public CoreModule(ReactApplicationContext reactContext, Class<? extends BluetoothService> bluetoothServiceClass) {
         super(reactContext);
-        this.name = name;
         this.mBluetoothServiceClass = bluetoothServiceClass;
 
         mBluetoothManager = (BluetoothManager) getReactApplicationContext().getSystemService(Context.BLUETOOTH_SERVICE);
@@ -87,16 +84,10 @@ public class CoreModule extends ReactContextBaseJavaModule implements BluetoothS
         return constants;
     }
 
-    @Override
-    public String getName() {
-        return name;
-    }
-
     /* ====================================
                  REACT METHODS
     ==================================== */
 
-    @ReactMethod
     public void init(ReadableMap config, Promise promise) {
         Log.d(TAG, "config: " + config);
         if (!validateBluetoothAdapter(promise)) return;
@@ -130,7 +121,6 @@ public class CoreModule extends ReactContextBaseJavaModule implements BluetoothS
         promise.resolve(returnConfig);
     }
 
-    @ReactMethod
     public void startScan(final Promise promise) {
         Log.d(TAG, "startScan");
         if (!validateServiceConfig(promise)) return;
@@ -139,7 +129,6 @@ public class CoreModule extends ReactContextBaseJavaModule implements BluetoothS
         mService.startScan();
     }
 
-    @ReactMethod
     public void stopScan(Promise promise) throws InterruptedException {
         Log.d(TAG, "stopScan");
         if (!validateServiceConfig(promise)) return;
@@ -151,7 +140,6 @@ public class CoreModule extends ReactContextBaseJavaModule implements BluetoothS
         promise.resolve(null);
     }
 
-    @ReactMethod
     public void connect(ReadableMap device, final Promise promise) throws InterruptedException {
         Log.d(TAG, "connect: " + device);
 
@@ -181,7 +169,6 @@ public class CoreModule extends ReactContextBaseJavaModule implements BluetoothS
         }
     }
 
-    @ReactMethod
     public void getStatus(final Promise promise) {
         if (!validateServiceConfig(promise)) return;
 
@@ -190,7 +177,6 @@ public class CoreModule extends ReactContextBaseJavaModule implements BluetoothS
         promise.resolve(mService.getStatus().name());
     }
 
-    @ReactMethod
     public void write(String data, Promise promise) {
         Log.d(TAG, "write: " + data);
         if (!validateServiceConfig(promise)) return;
@@ -199,7 +185,6 @@ public class CoreModule extends ReactContextBaseJavaModule implements BluetoothS
         promise.resolve(null);
     }
 
-    @ReactMethod
     public void writeln(String data, Promise promise) {
         Log.d(TAG, "writeln: " + data);
         if (!validateServiceConfig(promise)) return;
@@ -208,7 +193,6 @@ public class CoreModule extends ReactContextBaseJavaModule implements BluetoothS
         promise.resolve(null);
     }
 
-    @ReactMethod
     public void writeIntArray(ReadableArray data, Promise promise) {
         Log.d(TAG, "writeIntArray: " + data);
         if (!validateServiceConfig(promise)) return;
@@ -223,7 +207,6 @@ public class CoreModule extends ReactContextBaseJavaModule implements BluetoothS
         promise.resolve(null);
     }
 
-    @ReactMethod
     public void stopService(final Promise promise) {
         Log.d(TAG, "stopService");
         if (!validateServiceConfig(promise)) return;
@@ -238,7 +221,6 @@ public class CoreModule extends ReactContextBaseJavaModule implements BluetoothS
             ADAPTER - REACT METHODS
      ==================================== */
 
-    @ReactMethod
     public void isAdapterEnable(final Promise promise) {
         if (!validateBluetoothAdapter(promise)) return;
 
@@ -247,7 +229,6 @@ public class CoreModule extends ReactContextBaseJavaModule implements BluetoothS
         promise.resolve(mBluetoothAdapter.isEnabled());
     }
 
-    @ReactMethod
     public void enable(final Promise promise) {
         Log.d(TAG, "enable");
         if (!validateBluetoothAdapter(promise)) return;
@@ -259,7 +240,6 @@ public class CoreModule extends ReactContextBaseJavaModule implements BluetoothS
         }
     }
 
-    @ReactMethod
     public void getBoundedDevices(final Promise promise) {
         if (!validateBluetoothAdapter(promise)) return;
 
