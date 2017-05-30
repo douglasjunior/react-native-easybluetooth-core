@@ -169,6 +169,16 @@ public abstract class CoreModule extends ReactContextBaseJavaModule implements B
         }
     }
 
+    public void disconnect(Promise promise) {
+        Log.d(TAG, "disconnect");
+
+        if (!validateServiceConfig(promise)) return;
+
+        mService.disconnect();
+
+        promise.resolve(null);
+    }
+
     public void getStatus(final Promise promise) {
         if (!validateServiceConfig(promise)) return;
 
