@@ -56,6 +56,7 @@ public class CoreModule extends ReactContextBaseJavaModule implements BluetoothS
 
     private static final String TAG = "CoreModule";
 
+    private final String name;
     private final BluetoothManager mBluetoothManager;
     private final BluetoothAdapter mBluetoothAdapter;
     private final Class<? extends BluetoothService> mBluetoothServiceClass;
@@ -63,8 +64,9 @@ public class CoreModule extends ReactContextBaseJavaModule implements BluetoothS
     private BluetoothService mService;
     private BluetoothWriter mWriter;
 
-    public CoreModule(ReactApplicationContext reactContext, Class<? extends BluetoothService> bluetoothServiceClass) {
+    public CoreModule(ReactApplicationContext reactContext, String name, Class<? extends BluetoothService> bluetoothServiceClass) {
         super(reactContext);
+        this.name = name;
         this.mBluetoothServiceClass = bluetoothServiceClass;
 
         mBluetoothManager = (BluetoothManager) getReactApplicationContext().getSystemService(Context.BLUETOOTH_SERVICE);
@@ -87,7 +89,7 @@ public class CoreModule extends ReactContextBaseJavaModule implements BluetoothS
 
     @Override
     public String getName() {
-        return "EasyBluetooth";
+        return name;
     }
 
     /* ====================================
