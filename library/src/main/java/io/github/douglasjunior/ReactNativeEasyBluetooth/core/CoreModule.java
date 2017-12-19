@@ -55,22 +55,25 @@ public abstract class CoreModule extends ReactContextBaseJavaModule implements B
 
     private static final String TAG = "CoreModule";
 
-    private final BluetoothManager mBluetoothManager;
-    private final BluetoothAdapter mBluetoothAdapter;
-    private final Class<? extends BluetoothService> mBluetoothServiceClass;
+    private BluetoothAdapter mBluetoothAdapter;
+    private Class<? extends BluetoothService> mBluetoothServiceClass;
 
     private BluetoothService mService;
     private BluetoothWriter mWriter;
 
     public CoreModule(ReactApplicationContext reactContext, Class<? extends BluetoothService> bluetoothServiceClass) {
         super(reactContext);
-        this.mBluetoothServiceClass = bluetoothServiceClass;
+        try {
+            this.mBluetoothServiceClass = bluetoothServiceClass;
 
-        mBluetoothManager = (BluetoothManager) getReactApplicationContext().getSystemService(Context.BLUETOOTH_SERVICE);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-            mBluetoothAdapter = mBluetoothManager.getAdapter();
-        } else {
-            mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+                BluetoothManager mBluetoothManager = (BluetoothManager) getReactApplicationContext().getSystemService(Context.BLUETOOTH_SERVICE);
+                mBluetoothAdapter = mBluetoothManager.getAdapter();
+            } else {
+                mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
         }
     }
 
@@ -90,141 +93,195 @@ public abstract class CoreModule extends ReactContextBaseJavaModule implements B
 
     public void init(ReadableMap config, Promise promise) {
         Log.d(TAG, "config: " + config);
-        if (!validateBluetoothAdapter(promise)) return;
+        try {
+            if (!validateBluetoothAdapter(promise)) return;
 
-        BluetoothConfiguration bluetoothConfig = new BluetoothConfiguration();
-        bluetoothConfig.context = getReactApplicationContext();
-        bluetoothConfig.bluetoothServiceClass = mBluetoothServiceClass;
-        bluetoothConfig.deviceName = config.getString("deviceName");
-        bluetoothConfig.characterDelimiter = config.getString("characterDelimiter").charAt(0);
-        bluetoothConfig.bufferSize = config.getInt("bufferSize");
-        if (config.hasKey("uuid"))
-            bluetoothConfig.uuid = UUID.fromString(config.getString("uuid"));
-        if (config.hasKey("uuidService"))
-            bluetoothConfig.uuidService = UUID.fromString(config.getString("uuidService"));
-        if (config.hasKey("uuidCharacteristic"))
-            bluetoothConfig.uuidCharacteristic = UUID.fromString(config.getString("uuidCharacteristic"));
-        if (config.hasKey("transport"))
-            bluetoothConfig.transport = config.getInt("transport");
-        bluetoothConfig.callListenersInMainThread = false;
+            BluetoothConfiguration bluetoothConfig = new BluetoothConfiguration();
+            bluetoothConfig.context = getReactApplicationContext();
+            bluetoothConfig.bluetoothServiceClass = mBluetoothServiceClass;
+            bluetoothConfig.deviceName = config.getString("deviceName");
+            bluetoothConfig.characterDelimiter = config.getString("characterDelimiter").charAt(0);
+            bluetoothConfig.bufferSize = config.getInt("bufferSize");
+            if (config.hasKey("uuid"))
+                bluetoothConfig.uuid = UUID.fromString(config.getString("uuid"));
+            if (config.hasKey("uuidService"))
+                bluetoothConfig.uuidService = UUID.fromString(config.getString("uuidService"));
+            if (config.hasKey("uuidCharacteristic"))
+                bluetoothConfig.uuidCharacteristic = UUID.fromString(config.getString("uuidCharacteristic"));
+            if (config.hasKey("transport"))
+                bluetoothConfig.transport = config.getInt("transport");
+            bluetoothConfig.callListenersInMainThread = false;
 
-        BluetoothService.init(bluetoothConfig);
-        mService = BluetoothService.getDefaultInstance();
-        mService.setOnScanCallback(this);
-        mService.setOnEventCallback(this);
+            BluetoothService.init(bluetoothConfig);
+            mService = BluetoothService.getDefaultInstance();
+            mService.setOnScanCallback(this);
+            mService.setOnEventCallback(this);
 
-        mWriter = new BluetoothWriter(mService);
+            mWriter = new BluetoothWriter(mService);
 
-        WritableNativeMap returnConfig = new WritableNativeMap();
-        returnConfig.merge(config);
+            WritableNativeMap returnConfig = new WritableNativeMap();
+            returnConfig.merge(config);
 
-        promise.resolve(returnConfig);
+            promise.resolve(returnConfig);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            promise.reject(ex);
+        }
     }
 
     public void startScan(final Promise promise) {
         Log.d(TAG, "startScan");
-        if (!validateServiceConfig(promise)) return;
+        try {
+            if (!validateServiceConfig(promise)) return;
 
-        mStartScanPromise = promise;
-        mService.startScan();
+            mStartScanPromise = promise;
+            mService.startScan();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            promise.reject(ex);
+        }
     }
 
     public void stopScan(Promise promise) throws InterruptedException {
         Log.d(TAG, "stopScan");
-        if (!validateServiceConfig(promise)) return;
+        try {
+            if (!validateServiceConfig(promise)) return;
 
-        mService.stopScan();
+            mService.stopScan();
 
-        Thread.sleep(1000);
+            Thread.sleep(1000);
 
-        promise.resolve(null);
+            promise.resolve(null);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            promise.reject(ex);
+        }
     }
 
     public void connect(ReadableMap device, final Promise promise) throws InterruptedException {
         Log.d(TAG, "connect: " + device);
 
-        if (!validateServiceConfig(promise)) return;
+        try {
+            if (!validateServiceConfig(promise)) return;
 
-        String address = device.getString("address");
-        String name = device.getString("name");
+            String address = device.getString("address");
+            String name = device.getString("name");
 
-        if (!mBluetoothAdapter.checkBluetoothAddress(address)) {
-            promise.reject(new IllegalArgumentException("Invalid device address: " + address));
-            return;
-        }
+            if (!mBluetoothAdapter.checkBluetoothAddress(address)) {
+                promise.reject(new IllegalArgumentException("Invalid device address: " + address));
+                return;
+            }
 
-        BluetoothDevice btDevice = mBluetoothAdapter.getRemoteDevice(address);
+            BluetoothDevice btDevice = mBluetoothAdapter.getRemoteDevice(address);
 
-        mService.connect(btDevice);
+            mService.connect(btDevice);
 
-        Thread.sleep(2000);
-        while (mService.getStatus() == BluetoothStatus.CONNECTING) {
-            Thread.yield();
-        }
+            Thread.sleep(2000);
+            while (mService.getStatus() == BluetoothStatus.CONNECTING) {
+                Thread.yield();
+            }
 
-        if (mService.getStatus() == BluetoothStatus.CONNECTED) {
-            promise.resolve(wrapDevice(btDevice, 0));
-        } else {
-            promise.reject(new IllegalStateException("Unable to connect to: " + name + " [" + address + "]"));
+            if (mService.getStatus() == BluetoothStatus.CONNECTED) {
+                promise.resolve(wrapDevice(btDevice, 0));
+            } else {
+                promise.reject(new IllegalStateException("Unable to connect to: " + name + " [" + address + "]"));
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            promise.reject(ex);
         }
     }
 
     public void disconnect(Promise promise) {
         Log.d(TAG, "disconnect");
 
-        if (!validateServiceConfig(promise)) return;
+        try {
+            if (!validateServiceConfig(promise)) return;
 
-        mService.disconnect();
+            mService.disconnect();
 
-        promise.resolve(null);
+            promise.resolve(null);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            promise.reject(ex);
+        }
     }
 
     public void getStatus(final Promise promise) {
-        if (!validateServiceConfig(promise)) return;
+        try {
+            if (!validateServiceConfig(promise)) return;
 
-        Log.d(TAG, "getStatus: " + mService.getStatus().name());
+            Log.d(TAG, "getStatus: " + mService.getStatus().name());
 
-        promise.resolve(mService.getStatus().name());
+            promise.resolve(mService.getStatus().name());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            promise.reject(ex);
+        }
     }
 
     public void write(String data, Promise promise) {
         Log.d(TAG, "write: " + data);
-        if (!validateServiceConfig(promise)) return;
 
-        mWriter.write(data);
-        promise.resolve(null);
+        try {
+            if (!validateServiceConfig(promise)) return;
+
+            mWriter.write(data);
+            promise.resolve(null);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            promise.reject(ex);
+        }
     }
 
     public void writeln(String data, Promise promise) {
         Log.d(TAG, "writeln: " + data);
-        if (!validateServiceConfig(promise)) return;
 
-        mWriter.writeln(data);
-        promise.resolve(null);
+        try {
+            if (!validateServiceConfig(promise)) return;
+
+            mWriter.writeln(data);
+            promise.resolve(null);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            promise.reject(ex);
+        }
     }
 
     public void writeIntArray(ReadableArray data, Promise promise) {
         Log.d(TAG, "writeIntArray: " + data);
-        if (!validateServiceConfig(promise)) return;
 
-        byte[] bytes = new byte[data.size()];
+        try {
+            if (!validateServiceConfig(promise)) return;
 
-        for (int i = 0; i < data.size(); i++) {
-            bytes[i] = (byte) data.getInt(i);
+            byte[] bytes = new byte[data.size()];
+
+            for (int i = 0; i < data.size(); i++) {
+                bytes[i] = (byte) data.getInt(i);
+            }
+
+            mService.write(bytes);
+            promise.resolve(null);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            promise.reject(ex);
         }
-
-        mService.write(bytes);
-        promise.resolve(null);
     }
 
     public void stopService(final Promise promise) {
         Log.d(TAG, "stopService");
-        if (!validateServiceConfig(promise)) return;
 
-        mService.stopService();
-        mService = null;
-        mWriter = null;
-        promise.resolve(null);
+        try {
+            if (!validateServiceConfig(promise)) return;
+
+            mService.stopService();
+            mService = null;
+            mWriter = null;
+            promise.resolve(null);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            promise.reject(ex);
+        }
     }
 
     /* ====================================
@@ -232,48 +289,70 @@ public abstract class CoreModule extends ReactContextBaseJavaModule implements B
      ==================================== */
 
     public void isAdapterEnable(final Promise promise) {
-        if (!validateBluetoothAdapter(promise)) return;
+        try {
+            if (!validateBluetoothAdapter(promise)) return;
 
-        Log.d(TAG, "isAdapterEnable: " + mBluetoothAdapter.isEnabled());
+            Log.d(TAG, "isAdapterEnable: " + mBluetoothAdapter.isEnabled());
 
-        promise.resolve(mBluetoothAdapter.isEnabled());
+            promise.resolve(mBluetoothAdapter.isEnabled());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            promise.reject(ex);
+        }
     }
 
     public void enable(final Promise promise) {
         Log.d(TAG, "enable");
-        if (!validateBluetoothAdapter(promise)) return;
 
-        if (mBluetoothAdapter.enable()) {
-            promise.resolve(null);
-        } else {
-            promise.reject(new IllegalAccessException("Could not enable bluetooth adapter."));
+        try {
+            if (!validateBluetoothAdapter(promise)) return;
+
+            if (mBluetoothAdapter.enable()) {
+                promise.resolve(null);
+            } else {
+                promise.reject(new IllegalAccessException("Could not enable bluetooth adapter."));
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            promise.reject(ex);
         }
     }
 
     public void disable(final Promise promise) {
         Log.d(TAG, "disable");
-        if (!validateBluetoothAdapter(promise)) return;
 
-        if (mBluetoothAdapter.disable()) {
-            promise.resolve(null);
-        } else {
-            promise.reject(new IllegalAccessException("Could not disable bluetooth adapter."));
+        try {
+            if (!validateBluetoothAdapter(promise)) return;
+
+            if (mBluetoothAdapter.disable()) {
+                promise.resolve(null);
+            } else {
+                promise.reject(new IllegalAccessException("Could not disable bluetooth adapter."));
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            promise.reject(ex);
         }
     }
 
     public void getBoundedDevices(final Promise promise) {
-        if (!validateBluetoothAdapter(promise)) return;
+        try {
+            if (!validateBluetoothAdapter(promise)) return;
 
-        WritableNativeArray devices = new WritableNativeArray();
+            WritableNativeArray devices = new WritableNativeArray();
 
-        for (BluetoothDevice btDevice : mBluetoothAdapter.getBondedDevices()) {
-            WritableNativeMap device = wrapDevice(btDevice, 0);
-            devices.pushMap(device);
+            for (BluetoothDevice btDevice : mBluetoothAdapter.getBondedDevices()) {
+                WritableNativeMap device = wrapDevice(btDevice, 0);
+                devices.pushMap(device);
+            }
+
+            Log.d(TAG, "getBoundedDevices: " + devices);
+
+            promise.resolve(devices);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            promise.reject(ex);
         }
-
-        Log.d(TAG, "getBoundedDevices: " + devices);
-
-        promise.resolve(devices);
     }
 
     /* ====================================
